@@ -1,0 +1,300 @@
+/* ============================================================
+   RAI-BUDDY — design tokens
+   A private, on-device assistant. The palette stays dark and
+   quiet like a instrument panel; the one signature move is the
+   signal-bar indicator that shows the model listening/thinking.
+   ============================================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
+
+:root {
+  --bg: #0a0e13;
+  --surface: #121820;
+  --surface-2: #1a222c;
+  --border: #262f3a;
+  --text: #e9eef3;
+  --text-dim: #8b96a3;
+  --accent: #5eead4;
+  --accent-soft: rgba(94, 234, 212, 0.14);
+  --accent-warm: #f2b85c;
+  --danger: #e8677a;
+  --radius: 10px;
+  --font-display: 'Space Grotesk', sans-serif;
+  --font-body: 'Inter', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+}
+
+/* ---------- base ---------- */
+html, body, [data-testid="stAppViewContainer"], .stApp {
+  background: var(--bg) !important;
+  color: var(--text);
+  font-family: var(--font-body);
+}
+
+#MainMenu, footer, header[data-testid="stHeader"] { visibility: hidden; height: 0; }
+
+.block-container {
+  max-width: 760px;
+  padding-top: 1.5rem;
+  padding-bottom: 6rem;
+}
+
+/* ---------- logo / masthead ---------- */
+#logo-container { display: none; } /* replaced by .rai-masthead below */
+
+.rai-masthead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.9rem 1.25rem;
+  margin-bottom: 1.75rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.rai-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+}
+
+.rai-mark {
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  background: linear-gradient(155deg, var(--accent-soft), transparent 70%);
+  border: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.rai-mark svg { width: 18px; height: 18px; }
+
+.rai-wordmark {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1.05rem;
+  letter-spacing: 0.01em;
+  color: var(--text);
+  line-height: 1.1;
+}
+
+.rai-subtitle {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  color: var(--text-dim);
+  letter-spacing: 0.02em;
+}
+
+/* signal bars — the signature element. idle = low murmur, active = full pulse */
+.rai-signal {
+  display: flex;
+  align-items: flex-end;
+  gap: 3px;
+  height: 16px;
+}
+
+.rai-signal span {
+  width: 3px;
+  border-radius: 2px;
+  background: var(--accent);
+  opacity: 0.55;
+  animation: rai-pulse 1.2s ease-in-out infinite;
+}
+
+.rai-signal span:nth-child(1) { height: 40%; animation-delay: 0s; }
+.rai-signal span:nth-child(2) { height: 100%; animation-delay: 0.15s; }
+.rai-signal span:nth-child(3) { height: 65%; animation-delay: 0.3s; }
+.rai-signal span:nth-child(4) { height: 85%; animation-delay: 0.45s; }
+
+@keyframes rai-pulse {
+  0%, 100% { transform: scaleY(0.35); opacity: 0.4; }
+  50% { transform: scaleY(1); opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rai-signal span { animation: none; opacity: 0.8; }
+}
+
+.rai-status {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  color: var(--text-dim);
+}
+
+.rai-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+/* ---------- sidebar / control panel ---------- */
+[data-testid="stSidebar"] {
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+}
+
+[data-testid="stSidebar"] .stMarkdown p,
+[data-testid="stSidebar"] label {
+  color: var(--text-dim) !important;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+[data-testid="stSidebar"] h3 {
+  font-family: var(--font-display);
+  color: var(--text) !important;
+  font-size: 0.95rem;
+  text-transform: none;
+}
+
+div[data-baseweb="select"] > div {
+  background: var(--surface-2) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 8px !important;
+  color: var(--text) !important;
+  font-family: var(--font-mono);
+}
+
+/* ---------- buttons ---------- */
+.stButton button {
+  background: var(--surface-2);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-family: var(--font-body);
+  font-weight: 500;
+  font-size: 0.85rem;
+  padding: 0.4rem 0.9rem;
+  transition: border-color 0.15s ease, color 0.15s ease;
+}
+
+.stButton button:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+/* the clear-history action reads as a quieter, cautionary action */
+button[kind="secondary"]:has(div:contains("Clear")) {}
+
+/* ---------- chat transcript ---------- */
+.rai-row {
+  display: flex;
+  gap: 0.6rem;
+  margin: 0.9rem 0;
+  align-items: flex-end;
+}
+
+.rai-row.user { flex-direction: row-reverse; }
+
+.rai-avatar {
+  flex: none;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+}
+
+.rai-avatar.bot {
+  background: var(--accent-soft);
+  color: var(--accent);
+  border: 1px solid rgba(94, 234, 212, 0.35);
+}
+
+.rai-avatar.user {
+  background: var(--surface-2);
+  color: var(--text-dim);
+  border: 1px solid var(--border);
+}
+
+.rai-bubble-wrap { max-width: 78%; }
+
+.rai-row.user .rai-bubble-wrap { display: flex; flex-direction: column; align-items: flex-end; }
+
+.chat-bubble {
+  padding: 0.65rem 0.9rem;
+  border-radius: var(--radius);
+  font-size: 0.92rem;
+  line-height: 1.5;
+  word-wrap: break-word;
+}
+
+.bot-bubble {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-bottom-left-radius: 3px;
+  color: var(--text);
+}
+
+.user-bubble {
+  background: var(--accent-soft);
+  border: 1px solid rgba(94, 234, 212, 0.3);
+  border-bottom-right-radius: 3px;
+  color: var(--text);
+}
+
+.rai-meta {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  color: var(--text-dim);
+  margin-top: 0.2rem;
+  padding: 0 0.15rem;
+}
+
+/* weather / tool responses get the warm accent to read as data, not chat */
+.chat-bubble.rai-tool {
+  border-color: rgba(242, 184, 92, 0.35);
+  background: rgba(242, 184, 92, 0.08);
+  font-family: var(--font-mono);
+  font-size: 0.82rem;
+  white-space: pre-wrap;
+}
+
+/* ---------- empty state ---------- */
+.rai-empty {
+  text-align: center;
+  padding: 3.5rem 1rem;
+  color: var(--text-dim);
+}
+
+.rai-empty h3 {
+  font-family: var(--font-display);
+  color: var(--text);
+  font-weight: 600;
+  font-size: 1.05rem;
+  margin-bottom: 0.3rem;
+}
+
+.rai-empty p { font-size: 0.85rem; max-width: 380px; margin: 0 auto; }
+
+/* ---------- chat input ---------- */
+[data-testid="stChatInput"] {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+
+[data-testid="stChatInput"] textarea {
+  color: var(--text) !important;
+  font-family: var(--font-body);
+}
+
+/* ---------- scrollbar (webkit) ---------- */
+::-webkit-scrollbar { width: 8px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--surface-2); border-radius: 4px; }

@@ -1,0 +1,21 @@
+services:
+  - type: web
+    name: rai-buddy
+    runtime: node
+    plan: free
+    region: singapore
+    buildCommand: npm ci && npm run build
+    startCommand: npm start
+    healthCheckPath: /api/health
+    autoDeployTrigger: commit
+    envVars:
+      - key: NODE_VERSION
+        value: 22.14.0
+      - key: AI_PROVIDER
+        value: anthropic
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: AI_MODEL
+        value: claude-sonnet-5
+      - key: SYSTEM_PROMPT
+        value: You are Rai Buddy, a warm, practical thinking partner. Give clear and accurate answers, ask useful questions when context is missing, and never claim to have capabilities you do not have.

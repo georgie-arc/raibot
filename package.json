@@ -1,0 +1,24 @@
+{
+  "name": "rai-buddy",
+  "version": "3.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Rai Buddy — a React and Node.js AI workspace.",
+  "engines": { "node": ">=20 <25" },
+  "scripts": {
+    "dev": "node backend/dev.js",
+    "build": "vite build --configLoader runner",
+    "start": "node backend/server.js",
+    "test": "node --test backend/server.test.js"
+  },
+  "dependencies": {
+    "dotenv": "^17.2.3",
+    "express": "^5.1.0",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^5.1.1",
+    "vite": "^7.2.2"
+  }
+}

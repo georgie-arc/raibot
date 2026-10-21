@@ -1,69 +1,71 @@
 # Rai Buddy
 
-A personal AI workspace inspired by Rai Buddy's beginnings during an internship in Thailand. A custom responsive frontend and Python backend, with no login, build step, API key, or Python dependencies.
-
-## Start
-
-1. Install Python 3.10 or later and Ollama if they are not already installed.
-2. Start Ollama. If the desktop app is not running, use `ollama serve`.
-3. Install a model: `ollama pull qwen3:8b`.
-4. From this folder, run:
-
-   ```powershell
-   python backend/app.py
-   ```
-
-5. Open **http://127.0.0.1:8000**.
-
-`python backend/localama.py` also starts the same app. The old Streamlit entry points have been replaced; do not use `streamlit run`.
+Rai Buddy is a no-login AI chat workspace built with React, Vite, Node.js, and Express. It keeps conversations in the visitor's browser and streams model replies through a server-side API, so provider keys never reach the frontend.
 
 ## Features
 
-- Streaming Ollama chat with conversation context, stop, retry, and copy.
-- Conversation history, search, renaming, bookmarks, deletion, and Markdown export.
-- Twelve starter prompts, with category filters and rotating suggestions.
-- Text/code attachments up to 100 KB (not PDF or images).
-- Model discovery, connection status, creativity control, and light/dark themes.
-- Responsive sidebar, keyboard navigation, `Ctrl+K` for a new chat, `Enter` to send, and `Shift+Enter` for a new line.
-- Escaped Markdown rendering; model-generated HTML never executes.
+- Responsive Rai Buddy interface with the transparent KMITL logo and light/dark themes.
+- Streaming conversations with stop, retry, copy, bookmark, search, rename, delete, and Markdown export.
+- Prompt library and text/code attachments up to 100 KB.
+- Browser-only chat history; no user account or database is required.
+- Anthropic, OpenAI-compatible, and local Ollama backends.
+- A single Render Web Service serves both the React build and the Node API.
 
-Chats and preferences are stored in this browser's localStorage. They are not synchronized between browsers or devices. Clearing site data removes them. Export important conversations. Message text and attachments go to the configured Ollama server; no analytics or tracing is enabled. The assistant has no live web search or image-generation capability.
+## Project structure
 
-## Configuration
-
-Optional: add these values to the existing `.env`, or copy `.env.example` to `.env` if no `.env` exists. Environment variables take precedence.
-
-```dotenv
-OLLAMA_URL=http://127.0.0.1:11434
-OLLAMA_MODEL=qwen3:8b
-HOST=127.0.0.1
-PORT=8000
+```text
+frontend/
+  index.html                 Vite entry page
+  src/App.jsx                React application shell
+  src/uiController.js        Chat interactions and browser storage
+  styles.css                 Responsive Rai Buddy design
+  public/assets/             Public logo files
+backend/
+  ai.js                      AI provider adapters and streaming parsers
+  server.js                  Express API and production static server
+  server.test.js             Backend contract tests
+render.yaml                  Render Blueprint
+vite.config.js               React build and development proxy
 ```
 
-Choose a different installed model in Settings. The Ollama URL is configured on the server, not through the browser. The default host is loopback, intended for personal use on your machine. Public hosting requires a production server, HTTPS, access controls, and resource limits. The app uses Python's development HTTP server.
+## Run locally
 
-The old Hugging Face token was removed from `login.py`. Revoke that previously hardcoded token in your Hugging Face account. Existing `.env` credentials were left untouched and are ignored by version control; this app does not require them.
+Install Node.js 20 or later, then run:
+
+```powershell
+npm install
+Copy-Item .env.example .env
+npm run build
+npm start
+```
+
+Open `http://127.0.0.1:8000`. Update `.env` with one provider configuration before chatting. Existing `.env` files are ignored by Git.
+
+For local Ollama:
+
+```dotenv
+AI_PROVIDER=ollama
+OLLAMA_URL=http://127.0.0.1:11434
+AI_MODEL=qwen3:8b
+```
+
+## Deploy on Render
+
+The repository includes a Render Blueprint. After the code is on GitHub:
+
+1. In Render, choose **New → Blueprint**.
+2. Connect `https://github.com/georgie-arc/raibot`.
+3. Render reads `render.yaml` and creates the `rai-buddy` Node Web Service in Singapore.
+4. Enter `ANTHROPIC_API_KEY` when Render asks for the secret.
+5. Apply the Blueprint and wait for `/api/health` to pass.
+
+The service uses `npm ci && npm run build` and `npm start`, listens on Render's `PORT`, and automatically redeploys commits from `main`. To use another provider, change the Render environment variables described in `.env.example`.
 
 ## Validate
 
 ```powershell
-python -m unittest discover -s backend -v
-python -m py_compile backend/app.py backend/localama.py
-node --check frontend/app.js
+npm test
+npm run build
 ```
 
-Backend tests use a temporary local server and mock Ollama. They cover streamed replies, conversation context, Unicode, validation, blocked cross-origin requests, offline behavior, and static-file access restrictions.
-
-## Structure
-
-```text
-backend/app.py              Python HTTP server and Ollama streaming proxy
-backend/localama.py         Compatibility launcher
-backend/test_app.py         Backend contract tests
-frontend/index.html         Accessible application structure
-frontend/styles.css         Responsive themes and visual design
-frontend/app.js             Chat UI, streaming, storage, and dialogs
-frontend/assets/            Logo and brand assets
-```
-
-The frontend and backend are kept separate so the interface can evolve independently from the local AI server.
+Do not commit `.env`, API keys, `node_modules`, or `dist`. The included `.gitignore` already excludes them.

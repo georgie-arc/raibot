@@ -25,7 +25,7 @@ if (!Array.isArray(chats)) chats = [];
 chats = chats.filter(c => c && typeof c.id === 'string' && typeof c.title === 'string' && Array.isArray(c.messages));
 let settings = readStore('rai.settings.v2', {model:'', temperature:0.7, dark:false});
 if (!settings || typeof settings !== 'object') settings = {model:'', temperature:0.7, dark:false};
-let activeId = null, savedOnly = false, controller = null, attachment = null, status = {connected:false, models:[], default_model:'qwen3:8b'}, promptSet = 0;
+let activeId = null, savedOnly = false, controller = null, attachment = null, status = {connected:false, models:[], default_model:'', provider:'AI'}, promptSet = 0;
 const prompts = [
   {title:'Write something', subtitle:'Find the right words, faster.', icon:'pen', color:'peach', category:'Write', text:'Help me write a clear, friendly email. Ask me who it is for and what I want to say.'},
   {title:'Crack the code', subtitle:'A fresh pair of eyes for your code.', icon:'code', color:'violet', category:'Code', text:'Help me debug my code. Ask me to share the code, the expected behavior, and any error messages.'},
@@ -106,7 +106,7 @@ function renderMessages() {
     const row = document.createElement('article'); row.className = 'message';
     const avatar = document.createElement('div'); avatar.className = 'avatar' + (message.role === 'user' ? ' user' : '');
     if (message.role === 'user') avatar.textContent = 'Y';
-    else avatar.innerHTML = '<span class="avatar-logo logo-crop"><img src="/kmitl-logo.png" alt=""></span>';
+    else avatar.innerHTML = '<span class="avatar-logo logo-crop"><img src="/assets/kmitl-logo.png" alt=""></span>';
     const main = document.createElement('div'); main.className = 'message-main';
     const heading = document.createElement('div'); heading.className = 'message-heading'; heading.textContent = message.role === 'user' ? 'You' : 'Rai Buddy';
     const time = document.createElement('span'); time.className = 'message-time'; time.textContent = new Date(message.time || chat.updated).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}); heading.append(time);
@@ -169,21 +169,22 @@ function manageChat(chat) {
 }
 async function checkStatus() {
   try { const response = await fetch('/api/status', {signal:AbortSignal.timeout(6000)}); if (!response.ok) throw new Error(); status = await response.json();
-    if (!settings.model) { settings.model = status.models.includes(status.default_model) ? status.default_model : (status.models[0] || status.default_model); saveSettings(); }
+    if (!settings.model || (status.provider !== 'ollama' && settings.model !== status.default_model)) { settings.model = status.models.includes(status.default_model) ? status.default_model : (status.models[0] || status.default_model); saveSettings(); }
     $('status-dot').className = 'status-dot ' + (status.connected ? 'online' : 'offline');
     $('model-label').textContent = settings.model || 'Local AI';
-    $('model-button').title = status.connected ? 'Ollama connected · Model settings' : 'Ollama offline · Open setup';
+    $('model-button').title = status.connected ? `${status.provider} connected · Model settings` : `${status.provider} is not configured · Open setup`;
   } catch { $('status-dot').className = 'status-dot offline'; $('model-label').textContent = 'Reconnect'; }
 }
 async function openSettings() {
   const content = showModal('A buddy, on your terms.', 'SETTINGS');
   content.innerHTML = '<p class="modal-intro">Checking your local AI connection…</p>';
   await checkStatus(); if (!$('modal').open || $('modal-title').textContent !== 'A buddy, on your terms.') return;
-  content.innerHTML = `<div class="settings-status"><span class="status-dot ${status.connected ? 'online' : 'offline'}"></span>${status.connected ? `Ollama connected · ${status.models.length} installed models` : 'Ollama is offline'}</div>
-    <label class="field-label" for="model-select">AI model</label><input class="modal-input" id="model-select" list="installed-models" placeholder="e.g. qwen3:8b" value="${escapeHTML(settings.model || status.default_model)}"><datalist id="installed-models">${status.models.map(m=>`<option value="${escapeHTML(m)}">`).join('')}</datalist>
+  const cloud = status.provider !== 'ollama';
+  content.innerHTML = `<div class="settings-status"><span class="status-dot ${status.connected ? 'online' : 'offline'}"></span>${status.connected ? `${escapeHTML(status.provider)} connected` : `${escapeHTML(status.provider)} needs configuration`}</div>
+    <label class="field-label" for="model-select">AI model</label><input class="modal-input" id="model-select" list="installed-models" placeholder="Model name" value="${escapeHTML(settings.model || status.default_model)}" ${cloud ? 'readonly' : ''}><datalist id="installed-models">${status.models.map(m=>`<option value="${escapeHTML(m)}">`).join('')}</datalist>
     <label class="field-label" for="temperature">Creativity</label><div class="range-row"><input id="temperature" type="range" min="0" max="2" step="0.1" value="${Number(settings.temperature) || 0}"><output id="temperature-output">${Number(settings.temperature) || 0}</output></div><p class="file-note">Lower for focused answers. Higher for more varied ideas.</p>
-    <div class="setup-note"><strong>Run your AI locally</strong><br>Install Ollama, then run these commands in a terminal:<code>ollama serve</code><code>ollama pull ${escapeHTML(status.default_model)}</code>Choose an installed model above. Ollama needs to stay running while you chat. No account or API key required.</div>
-    <p class="file-note">Chats and preferences are saved only in this browser. Clearing browser data removes them. Messages and attached text are sent to the configured Ollama server.</p>
+    <div class="setup-note"><strong>${cloud ? 'Cloud AI configuration' : 'Run your AI locally'}</strong><br>${cloud ? `The ${escapeHTML(status.provider)} provider and model are managed securely by the server. API keys are never sent to your browser.` : `Install Ollama, then run:<code>ollama serve</code><code>ollama pull ${escapeHTML(status.default_model)}</code>Choose an installed model above. Ollama must stay running while you chat.`}</div>
+    <p class="file-note">Chats and preferences are saved only in this browser. Clearing browser data removes them. Messages and attached text are sent through Rai Buddy's configured AI provider.</p>
     <div class="modal-actions"><button id="refresh-connection">Recheck connection</button><button class="primary" id="save-settings">Save preferences</button></div>`;
   $('temperature').oninput = () => $('temperature-output').textContent = $('temperature').value;
   $('refresh-connection').onclick = openSettings;
@@ -225,6 +226,7 @@ async function generate(chat) {
   } catch(error) { if(error.name==='AbortError') answer.stopped=true; else answer.error=error.message || 'Connection interrupted. Please try again.'; }
   finally { controller=null; $('send-button').innerHTML=icon('arrow-up'); $('send-button').setAttribute('aria-label','Send message'); $('enter-hint').textContent='Enter to send'; $('prompt').disabled=false; $('attach-button').disabled=false; chat.updated=Date.now(); persist(); renderMessages(); renderHistory(); $('prompt').focus({preventScroll:true}); followScroll(); }
 }
+export function initApp() {
 icons(); applyTheme(); renderPrompts(); renderView(); checkStatus();
 $('new-chat').onclick=newChat; $('history-new').onclick=newChat;
 $('nav-chats').onclick=()=>{savedOnly=false;renderHistory();}; $('nav-saved').onclick=()=>{savedOnly=true;renderHistory();};
@@ -240,3 +242,4 @@ document.addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&e.key.toLower
 $('attach-button').onclick=()=>$('file-input').click();
 $('file-input').onchange=async()=>{const file=$('file-input').files[0];if(!file)return;const allowed=/\.(txt|md|csv|json|py|js|ts|html|css|xml|yaml|yml|log)$/i;if(!allowed.test(file.name)){toast('Choose a text or code file. PDF and images are not supported yet.');$('file-input').value='';return;}if(file.size>100*1024){toast('Please choose a text file smaller than 100 KB.');$('file-input').value='';return;}try{const text=await file.text();if(text.includes('\u0000'))throw new Error();attachment={name:file.name,text,size:file.size};renderAttachment();$('prompt').focus();}catch{toast('This file could not be read as text.');}finally{$('file-input').value='';}};
 window.addEventListener('beforeunload',e=>{if(controller){e.preventDefault();e.returnValue='';}});
+}

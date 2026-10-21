@@ -1,65 +1,15 @@
 <!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#f7f8fa">
-  <meta name="description" content="Rai Buddy — a little curiosity, a lot of possibilities. Your personal AI workspace, no login needed.">
-  <title>Rai Buddy · Your everyday AI companion</title>
-  <link rel="icon" type="image/png" href="/kmitl-logo.png">
-  <link rel="stylesheet" href="/styles.css"><script defer src="/app.js"></script>
-</head>
-<body>
-  <div class="app-shell">
-    <aside class="sidebar" id="sidebar" aria-label="Workspace navigation">
-      <a class="brand" href="/" aria-label="Rai Buddy home"><span class="brand-logo logo-crop"><img src="/kmitl-logo.png" alt="KMITL"></span><span>Rai <span class="brand-light">Buddy</span><span class="brand-dot">.</span></span></a>
-      <button class="new-chat primary" id="new-chat"><span data-icon="plus"></span> New chat <kbd>Ctrl K</kbd></button>
-      <button class="search-button" id="search-button"><span data-icon="search"></span> Search conversations <kbd>⌕</kbd></button>
-      <nav class="main-nav" aria-label="Main navigation">
-        <button class="nav-item active" id="nav-chats"><span data-icon="chat"></span> All chats <span class="nav-count" id="chat-count">0</span></button>
-        <button class="nav-item" id="nav-library"><span data-icon="grid"></span> Prompt library <span class="tiny-badge">12</span></button>
-        <button class="nav-item" id="nav-saved"><span data-icon="bookmark"></span> Saved chats</button>
-      </nav>
-      <div class="history-heading"><span id="history-label">RECENT CONVERSATIONS</span><button class="icon-button" id="history-new" aria-label="Start a new conversation" data-icon="plus"></button></div>
-      <div class="history" id="history"></div>
-      <div class="sidebar-bottom">
-        <div class="local-card"><span class="local-icon" data-icon="shield"></span><div><strong>Your space. Your pace.</strong><p>No account. Just possibilities.</p></div><span class="green-dot"></span></div>
-        <button class="settings-button" id="settings-button"><span data-icon="settings"></span> Settings <span class="version">v2.0</span></button>
-      </div>
-    </aside>
-    <button class="sidebar-scrim" id="sidebar-scrim" aria-label="Close navigation"></button>
-    <main class="main">
-      <header class="topbar">
-        <div class="topbar-left"><button class="icon-button mobile-menu" id="menu-button" data-icon="menu" aria-label="Open navigation"></button><span class="breadcrumb">Workspace</span><span class="breadcrumb-slash">/</span><span class="page-title" id="page-title">New conversation</span></div>
-        <div class="topbar-right"><button class="model-pill" id="model-button"><span class="status-dot" id="status-dot"></span><span id="model-label">Local AI</span><span data-icon="chevron"></span></button><button class="icon-button" id="theme-button" data-icon="moon" aria-label="Toggle dark theme"></button></div>
-      </header>
-      <div class="workspace" id="workspace">
-        <section class="welcome" id="welcome">
-          <div class="welcome-kicker"><span></span> A LITTLE CURIOSITY GOES A LONG WAY</div>
-          <div class="hero-mark logo-crop"><img src="/kmitl-logo.png" alt="KMITL logo"></div>
-          <h1>Good things start with<br>a little <span>“what if?”</span></h1>
-          <p class="hero-description">Meet Rai Buddy. Your thinking partner for big ideas,<br class="desktop-break"> small questions, and everything in between.</p>
-        </section>
-        <section class="conversation" id="conversation" aria-label="Conversation" aria-live="polite" hidden></section>
-        <div class="compose-area" id="compose-area">
-          <form class="composer" id="chat-form">
-            <div class="composer-label"><span data-icon="sparkles"></span> A fresh thought starts here</div>
-            <div class="attachment-preview" id="attachment-preview" hidden></div>
-            <textarea id="prompt" rows="3" maxlength="24000" placeholder="Ask a question, or let’s make something great…" aria-label="Message Rai Buddy"></textarea>
-            <div class="composer-bottom"><div class="composer-tools"><button type="button" class="tool-button" id="attach-button" title="Attach a text or code file"><span data-icon="paperclip"></span><span>Attach file</span></button><span class="tool-divider"></span><button type="button" class="tool-button" id="prompts-button"><span data-icon="grid"></span><span>Prompts</span></button></div><div class="send-tools"><span class="enter-hint" id="enter-hint">Enter to send</span><button type="submit" class="send-button" id="send-button" aria-label="Send message"><span data-icon="arrow-up"></span></button></div></div>
-          </form>
-          <input type="file" id="file-input" accept=".txt,.md,.csv,.json,.py,.js,.ts,.html,.css,.xml,.yaml,.yml,.log" hidden>
-          <div class="composer-footnote"><span data-icon="shield"></span> Just you and your ideas. Chats stay in this browser.</div>
-        </div>
-        <section class="suggestions" id="suggestions">
-          <div class="suggestions-heading"><span>NOT SURE WHERE TO START?</span><button id="shuffle-prompts"><span data-icon="shuffle"></span> A little inspiration</button></div>
-          <div class="prompt-grid" id="prompt-grid"></div>
-          <div class="welcome-footer"><span class="footer-line"></span><span>Built for curious minds. Like yours.</span><span class="footer-line"></span></div>
-        </section>
-      </div>
-      <footer class="main-footer"><span><span class="mini-mark logo-crop"><img src="/kmitl-logo.png" alt=""></span> A buddy for your everyday brilliance.</span><span>Rai Buddy can make mistakes. Stay curious, double-check.</span></footer>
-    </main>
-  </div>
-  <dialog id="modal"><div class="modal-header"><div><div class="modal-eyebrow" id="modal-eyebrow">YOUR WORKSPACE</div><h2 id="modal-title"></h2></div><button class="icon-button" id="close-modal" data-icon="x" aria-label="Close dialog"></button></div><div id="modal-content"></div></dialog>
-  <div class="toast" id="toast" role="status" hidden></div>
-</body>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#f7f8fa" />
+    <meta name="description" content="Rai Buddy — your personal AI workspace, no login needed." />
+    <link rel="icon" type="image/png" href="/assets/kmitl-logo.png" />
+    <title>Rai Buddy · Your everyday AI companion</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
 </html>

@@ -2,12 +2,12 @@ const DEFAULT_SYSTEM_PROMPT = 'You are Rai Buddy, a warm, practical thinking par
 
 export function getConfig(env = process.env) {
   const provider = (env.AI_PROVIDER || (env.ANTHROPIC_API_KEY ? 'anthropic' : env.OPENAI_API_KEY ? 'openai' : 'ollama')).toLowerCase();
-  const defaults = { anthropic: 'claude-sonnet-5', openai: 'gpt-5-mini', ollama: 'qwen3:8b' };
+  const defaults = { anthropic: 'claude-sonnet-5', nvidia: 'openai/gpt-oss-20b', openai: 'gpt-5-mini', ollama: 'qwen3:8b' };
   return {
     provider,
     model: env.AI_MODEL || env.OLLAMA_MODEL || defaults[provider] || '',
-    apiKey: env.AI_API_KEY || (provider === 'anthropic' ? env.ANTHROPIC_API_KEY : env.OPENAI_API_KEY) || '',
-    baseUrl: (env.AI_BASE_URL || (provider === 'anthropic' ? 'https://api.anthropic.com/v1' : provider === 'openai' ? 'https://api.openai.com/v1' : env.OLLAMA_URL || 'http://127.0.0.1:11434')).replace(/\/$/, ''),
+    apiKey: env.AI_API_KEY || (provider === 'anthropic' ? env.ANTHROPIC_API_KEY : provider === 'nvidia' ? env.NVIDIA_API_KEY : env.OPENAI_API_KEY) || '',
+    baseUrl: (env.AI_BASE_URL || (provider === 'anthropic' ? 'https://api.anthropic.com/v1' : provider === 'nvidia' ? 'https://integrate.api.nvidia.com/v1' : provider === 'openai' ? 'https://api.openai.com/v1' : env.OLLAMA_URL || 'http://127.0.0.1:11434')).replace(/\/$/, ''),
     systemPrompt: env.SYSTEM_PROMPT || DEFAULT_SYSTEM_PROMPT,
   };
 }
@@ -117,7 +117,7 @@ async function* streamOllama(messages, config, fetchImpl, signal, temperature) {
 
 export function streamReply({ messages, temperature, signal }, config, fetchImpl = fetch) {
   if (config.provider === 'anthropic') return streamAnthropic(messages, config, fetchImpl, signal);
-  if (config.provider === 'openai' || config.provider === 'openai-compatible') return streamOpenAI(messages, config, fetchImpl, signal, temperature);
+  if (config.provider === 'nvidia' || config.provider === 'openai' || config.provider === 'openai-compatible') return streamOpenAI(messages, config, fetchImpl, signal, temperature);
   if (config.provider === 'ollama') return streamOllama(messages, config, fetchImpl, signal, temperature);
   throw new Error(`Unsupported AI_PROVIDER: ${config.provider}`);
 }

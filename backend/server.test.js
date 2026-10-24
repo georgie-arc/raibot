@@ -19,6 +19,15 @@ test('health and provider status are available', async () => {
   });
 });
 
+test('recognizes NVIDIA as an OpenAI-compatible hosted provider', async () => {
+  await withServer({ env: { AI_PROVIDER: 'nvidia', NVIDIA_API_KEY: 'nvapi-test' } }, async base => {
+    const status = await (await fetch(`${base}/api/status`)).json();
+    assert.equal(status.connected, true);
+    assert.equal(status.provider, 'nvidia');
+    assert.equal(status.default_model, 'openai/gpt-oss-20b');
+  });
+});
+
 test('streams Anthropic text as NDJSON', async () => {
   const encoder = new TextEncoder();
   const fetchImpl = async () => new Response(new ReadableStream({ start(controller) {

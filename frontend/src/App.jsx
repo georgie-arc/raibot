@@ -26,7 +26,7 @@ export default function App() {
     <main className="main">
       <header className="topbar">
         <div className="topbar-left"><button className="icon-button mobile-menu" id="menu-button" data-icon="menu" aria-label="Open navigation" /><span className="breadcrumb">Workspace</span><span className="breadcrumb-slash">/</span><span className="page-title" id="page-title">New conversation</span></div>
-        <div className="topbar-right"><button className="model-pill" id="model-button"><span className="status-dot" id="status-dot" /><span id="model-label">Connecting…</span><span data-icon="chevron" /></button><button className="icon-button" id="theme-button" data-icon="moon" aria-label="Toggle dark theme" /></div>
+        <div className="topbar-right"><button className="icon-button" id="theme-button" data-icon="moon" aria-label="Toggle dark theme" /></div>
       </header>
       <div className="workspace" id="workspace">
         <section className="welcome" id="welcome">

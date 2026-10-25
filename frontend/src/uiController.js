@@ -170,10 +170,7 @@ function manageChat(chat) {
 async function checkStatus() {
   try { const response = await fetch('/api/status', {signal:AbortSignal.timeout(6000)}); if (!response.ok) throw new Error(); status = await response.json();
     if (settings.model !== status.default_model) { settings.model = status.default_model; saveSettings(); }
-    $('status-dot').className = 'status-dot ' + (status.connected ? 'online' : 'offline');
-    $('model-label').textContent = settings.model || 'Local AI';
-    $('model-button').title = status.connected ? `${status.provider} connected · Model settings` : `${status.provider} is not configured · Open setup`;
-  } catch { $('status-dot').className = 'status-dot offline'; $('model-label').textContent = 'Reconnect'; }
+  } catch { status = {...status, connected:false}; }
 }
 async function openSettings() {
   const content = showModal('A buddy, on your terms.', 'SETTINGS');
@@ -187,7 +184,7 @@ async function openSettings() {
     <div class="modal-actions"><button id="refresh-connection">Recheck connection</button><button class="primary" id="save-settings">Save preferences</button></div>`;
   $('temperature').oninput = () => $('temperature-output').textContent = $('temperature').value;
   $('refresh-connection').onclick = openSettings;
-  $('save-settings').onclick = () => { settings.model=status.default_model; settings.temperature=Number($('temperature').value); saveSettings(); $('model-label').textContent=status.default_model; $('modal').close(); toast('Preferences saved.'); };
+  $('save-settings').onclick = () => { settings.model=status.default_model; settings.temperature=Number($('temperature').value); saveSettings(); $('modal').close(); toast('Preferences saved.'); };
 }
 function renderAttachment() {
   $('attachment-preview').hidden = !attachment; $('attachment-preview').replaceChildren();
@@ -230,7 +227,7 @@ icons(); applyTheme(); renderPrompts(); renderView(); checkStatus();
 $('new-chat').onclick=newChat; $('history-new').onclick=newChat;
 $('nav-chats').onclick=()=>{savedOnly=false;renderHistory();}; $('nav-saved').onclick=()=>{savedOnly=true;renderHistory();};
 $('nav-library').onclick=openLibrary; $('prompts-button').onclick=openLibrary; $('search-button').onclick=openSearch;
-$('settings-button').onclick=openSettings; $('model-button').onclick=openSettings;
+$('settings-button').onclick=openSettings;
 $('theme-button').onclick=()=>{settings.dark=!settings.dark;applyTheme();saveSettings();};
 $('shuffle-prompts').onclick=()=>{promptSet=(promptSet+1)%3;renderPrompts();};
 $('menu-button').onclick=()=>{$('sidebar').classList.add('open');$('sidebar-scrim').classList.add('open');}; $('sidebar-scrim').onclick=closeSidebar;

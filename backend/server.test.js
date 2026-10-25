@@ -3,6 +3,8 @@ import test from 'node:test';
 import { once } from 'node:events';
 import { createApp } from './server.js';
 
+const MODEL = 'nvidia/nemotron-3.5-lightning-30b-a3b';
+
 async function withServer(options, run) {
   const server = createApp(options).listen(0, '127.0.0.1');
   await once(server, 'listening');
@@ -10,43 +12,49 @@ async function withServer(options, run) {
   finally { server.close(); await once(server, 'close'); }
 }
 
-test('health and provider status are available', async () => {
-  await withServer({ env: { AI_PROVIDER: 'anthropic', AI_MODEL: 'claude-sonnet-5', ANTHROPIC_API_KEY: 'test' } }, async base => {
+test('health and NVIDIA model status are available', async () => {
+  await withServer({ env: { NVIDIA_API_KEY: 'nvapi-test' } }, async base => {
     assert.deepEqual(await (await fetch(`${base}/api/health`)).json(), { ok: true });
     const status = await (await fetch(`${base}/api/status`)).json();
     assert.equal(status.connected, true);
-    assert.equal(status.provider, 'anthropic');
-  });
-});
-
-test('recognizes NVIDIA as an OpenAI-compatible hosted provider', async () => {
-  await withServer({ env: { AI_PROVIDER: 'nvidia', NVIDIA_API_KEY: 'nvapi-test' } }, async base => {
-    const status = await (await fetch(`${base}/api/status`)).json();
-    assert.equal(status.connected, true);
     assert.equal(status.provider, 'nvidia');
-    assert.equal(status.default_model, 'openai/gpt-oss-20b');
+    assert.equal(status.default_model, MODEL);
+    assert.deepEqual(status.models, [MODEL]);
   });
 });
 
-test('streams Anthropic text as NDJSON', async () => {
+test('streams NVIDIA Nemotron text as NDJSON', async () => {
   const encoder = new TextEncoder();
-  const fetchImpl = async () => new Response(new ReadableStream({ start(controller) {
-    controller.enqueue(encoder.encode('event: content_block_delta\ndata: {"type":"content_block_delta","delta":{"type":"text_delta","text":"Hello"}}\n\n'));
-    controller.enqueue(encoder.encode('event: message_stop\ndata: {"type":"message_stop"}\n\n'));
-    controller.close();
-  }}), { status: 200 });
-  await withServer({ env: { AI_PROVIDER: 'anthropic', AI_MODEL: 'claude-sonnet-5', ANTHROPIC_API_KEY: 'test' }, fetchImpl }, async base => {
-    const response = await fetch(`${base}/api/chat`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ messages: [{ role: 'user', content: 'Hi' }] }) });
+  let upstreamRequest;
+  const fetchImpl = async (url, options) => {
+    upstreamRequest = { url, options };
+    return new Response(new ReadableStream({ start(controller) {
+      controller.enqueue(encoder.encode('data: {"choices":[{"delta":{"reasoning_content":"hidden reasoning"}}]}\n\n'));
+      controller.enqueue(encoder.encode('data: {"choices":[{"delta":{"content":"Hello from Nemotron"}}]}\n\n'));
+      controller.enqueue(encoder.encode('data: [DONE]\n\n'));
+      controller.close();
+    }}), { status: 200 });
+  };
+
+  await withServer({ env: { NVIDIA_API_KEY: 'nvapi-test' }, fetchImpl }, async base => {
+    const response = await fetch(`${base}/api/chat`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ messages: [{ role: 'user', content: 'Hi' }], temperature: 1.7 }) });
     assert.equal(response.status, 200);
-    assert.equal(await response.text(), '{"content":"Hello"}\n{"done":true}\n');
+    assert.equal(await response.text(), '{"content":"Hello from Nemotron"}\n{"done":true}\n');
+    assert.equal(upstreamRequest.url, 'https://integrate.api.nvidia.com/v1/chat/completions');
+    assert.equal(upstreamRequest.options.headers.authorization, 'Bearer nvapi-test');
+    const body = JSON.parse(upstreamRequest.options.body);
+    assert.equal(body.model, MODEL);
+    assert.equal(body.temperature, 1);
+    assert.equal(body.chat_template_kwargs.enable_thinking, false);
   });
 });
 
-test('rejects invalid chat payloads and missing cloud keys', async () => {
-  await withServer({ env: { AI_PROVIDER: 'openai', AI_MODEL: 'gpt-5-mini' } }, async base => {
+test('rejects invalid payloads and a missing NVIDIA key', async () => {
+  await withServer({ env: {} }, async base => {
     const invalid = await fetch(`${base}/api/chat`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ messages: [] }) });
     assert.equal(invalid.status, 400);
     const missing = await fetch(`${base}/api/chat`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ messages: [{ role: 'user', content: 'Hi' }] }) });
     assert.equal(missing.status, 503);
+    assert.match((await missing.json()).error, /nvidia API configuration/i);
   });
 });

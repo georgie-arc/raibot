@@ -11,11 +11,7 @@ services:
     envVars:
       - key: NODE_VERSION
         value: 22.14.0
-      - key: AI_PROVIDER
-        value: nvidia
       - key: NVIDIA_API_KEY
         sync: false
-      - key: AI_MODEL
-        value: openai/gpt-oss-20b
       - key: SYSTEM_PROMPT
         value: You are Rai Buddy, a warm, practical thinking partner. Give clear and accurate answers, ask useful questions when context is missing, and never claim to have capabilities you do not have.

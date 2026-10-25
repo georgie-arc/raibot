@@ -169,7 +169,7 @@ function manageChat(chat) {
 }
 async function checkStatus() {
   try { const response = await fetch('/api/status', {signal:AbortSignal.timeout(6000)}); if (!response.ok) throw new Error(); status = await response.json();
-    if (!settings.model || (status.provider !== 'ollama' && settings.model !== status.default_model)) { settings.model = status.models.includes(status.default_model) ? status.default_model : (status.models[0] || status.default_model); saveSettings(); }
+    if (settings.model !== status.default_model) { settings.model = status.default_model; saveSettings(); }
     $('status-dot').className = 'status-dot ' + (status.connected ? 'online' : 'offline');
     $('model-label').textContent = settings.model || 'Local AI';
     $('model-button').title = status.connected ? `${status.provider} connected · Model settings` : `${status.provider} is not configured · Open setup`;
@@ -179,16 +179,15 @@ async function openSettings() {
   const content = showModal('A buddy, on your terms.', 'SETTINGS');
   content.innerHTML = '<p class="modal-intro">Checking your local AI connection…</p>';
   await checkStatus(); if (!$('modal').open || $('modal-title').textContent !== 'A buddy, on your terms.') return;
-  const cloud = status.provider !== 'ollama';
-  content.innerHTML = `<div class="settings-status"><span class="status-dot ${status.connected ? 'online' : 'offline'}"></span>${status.connected ? `${escapeHTML(status.provider)} connected` : `${escapeHTML(status.provider)} needs configuration`}</div>
-    <label class="field-label" for="model-select">AI model</label><input class="modal-input" id="model-select" list="installed-models" placeholder="Model name" value="${escapeHTML(settings.model || status.default_model)}" ${cloud ? 'readonly' : ''}><datalist id="installed-models">${status.models.map(m=>`<option value="${escapeHTML(m)}">`).join('')}</datalist>
+  content.innerHTML = `<div class="settings-status"><span class="status-dot ${status.connected ? 'online' : 'offline'}"></span>${status.connected ? 'NVIDIA connected' : 'NVIDIA API key required'}</div>
+    <label class="field-label" for="model-select">AI model</label><input class="modal-input" id="model-select" value="${escapeHTML(status.default_model)}" readonly>
     <label class="field-label" for="temperature">Creativity</label><div class="range-row"><input id="temperature" type="range" min="0" max="2" step="0.1" value="${Number(settings.temperature) || 0}"><output id="temperature-output">${Number(settings.temperature) || 0}</output></div><p class="file-note">Lower for focused answers. Higher for more varied ideas.</p>
-    <div class="setup-note"><strong>${cloud ? 'Cloud AI configuration' : 'Run your AI locally'}</strong><br>${cloud ? `The ${escapeHTML(status.provider)} provider and model are managed securely by the server. API keys are never sent to your browser.` : `Install Ollama, then run:<code>ollama serve</code><code>ollama pull ${escapeHTML(status.default_model)}</code>Choose an installed model above. Ollama must stay running while you chat.`}</div>
+    <div class="setup-note"><strong>NVIDIA cloud model</strong><br>Rai Buddy uses ${escapeHTML(status.default_model)}. The model is fixed on the server and the NVIDIA API key is never sent to your browser.</div>
     <p class="file-note">Chats and preferences are saved only in this browser. Clearing browser data removes them. Messages and attached text are sent through Rai Buddy's configured AI provider.</p>
     <div class="modal-actions"><button id="refresh-connection">Recheck connection</button><button class="primary" id="save-settings">Save preferences</button></div>`;
   $('temperature').oninput = () => $('temperature-output').textContent = $('temperature').value;
   $('refresh-connection').onclick = openSettings;
-  $('save-settings').onclick = () => { if(controller) return toast('Stop the current reply before changing the model.'); const model = $('model-select').value.trim(); if(!model || model.length>100) return toast('Enter a valid installed model name.'); settings.model=model; settings.temperature=Number($('temperature').value); saveSettings(); $('model-label').textContent=model; $('modal').close(); toast('Preferences saved.'); };
+  $('save-settings').onclick = () => { settings.model=status.default_model; settings.temperature=Number($('temperature').value); saveSettings(); $('model-label').textContent=status.default_model; $('modal').close(); toast('Preferences saved.'); };
 }
 function renderAttachment() {
   $('attachment-preview').hidden = !attachment; $('attachment-preview').replaceChildren();

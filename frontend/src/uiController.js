@@ -174,13 +174,11 @@ async function checkStatus() {
 }
 async function openSettings() {
   const content = showModal('A buddy, on your terms.', 'SETTINGS');
-  content.innerHTML = '<p class="modal-intro">Checking your local AI connection…</p>';
+  content.innerHTML = '<p class="modal-intro">Checking Rai Buddy…</p>';
   await checkStatus(); if (!$('modal').open || $('modal-title').textContent !== 'A buddy, on your terms.') return;
-  content.innerHTML = `<div class="settings-status"><span class="status-dot ${status.connected ? 'online' : 'offline'}"></span>${status.connected ? 'NVIDIA connected' : 'NVIDIA API key required'}</div>
-    <label class="field-label" for="model-select">AI model</label><input class="modal-input" id="model-select" value="${escapeHTML(status.default_model)}" readonly>
+  content.innerHTML = `<div class="settings-status"><span class="status-dot ${status.connected ? 'online' : 'offline'}"></span>${status.connected ? 'Rai Buddy is ready' : 'Rai Buddy is temporarily unavailable'}</div>
     <label class="field-label" for="temperature">Creativity</label><div class="range-row"><input id="temperature" type="range" min="0" max="2" step="0.1" value="${Number(settings.temperature) || 0}"><output id="temperature-output">${Number(settings.temperature) || 0}</output></div><p class="file-note">Lower for focused answers. Higher for more varied ideas.</p>
-    <div class="setup-note"><strong>NVIDIA cloud model</strong><br>Rai Buddy uses ${escapeHTML(status.default_model)}. The model is fixed on the server and the NVIDIA API key is never sent to your browser.</div>
-    <p class="file-note">Chats and preferences are saved only in this browser. Clearing browser data removes them. Messages and attached text are sent through Rai Buddy's configured AI provider.</p>
+    <p class="file-note">Chats and preferences are saved only in this browser. Clearing browser data removes them. Messages and attached text are processed by Rai Buddy.</p>
     <div class="modal-actions"><button id="refresh-connection">Recheck connection</button><button class="primary" id="save-settings">Save preferences</button></div>`;
   $('temperature').oninput = () => $('temperature-output').textContent = $('temperature').value;
   $('refresh-connection').onclick = openSettings;

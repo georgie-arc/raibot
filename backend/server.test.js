@@ -49,6 +49,27 @@ test('streams NVIDIA Nemotron text as NDJSON', async () => {
   });
 });
 
+test('retries temporary NVIDIA failures before returning a reply', async () => {
+  const encoder = new TextEncoder();
+  let attempts = 0;
+  const fetchImpl = async () => {
+    attempts += 1;
+    if (attempts < 3) return new Response('{"error":{"message":"temporarily unavailable"}}', { status: 503, headers: { 'content-type': 'application/json', 'retry-after': '0' } });
+    return new Response(new ReadableStream({ start(controller) {
+      controller.enqueue(encoder.encode('data: {"choices":[{"delta":{"content":"Recovered"}}]}\n\n'));
+      controller.enqueue(encoder.encode('data: [DONE]\n\n'));
+      controller.close();
+    }}), { status: 200 });
+  };
+
+  await withServer({ env: { NVIDIA_API_KEY: 'nvapi-test' }, fetchImpl }, async base => {
+    const response = await fetch(`${base}/api/chat`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ messages: [{ role: 'user', content: 'Hi' }] }) });
+    assert.equal(response.status, 200);
+    assert.equal(await response.text(), '{"content":"Recovered"}\n{"done":true}\n');
+    assert.equal(attempts, 3);
+  });
+});
+
 test('rejects invalid payloads and a missing NVIDIA key', async () => {
   await withServer({ env: {} }, async base => {
     const invalid = await fetch(`${base}/api/chat`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ messages: [] }) });

@@ -44,7 +44,8 @@ export function createApp({ env = process.env, fetchImpl = fetch } = {}) {
       }
       response.write(`${JSON.stringify({ done: true })}\n`);
     } catch (error) {
-      if (!response.writableEnded && !response.destroyed) response.write(`${JSON.stringify({ error: error.message || 'The AI service could not complete this reply.' })}\n`);
+      console.error('Chat service request failed:', error instanceof Error ? error.message : 'Unknown error');
+      if (!response.writableEnded && !response.destroyed) response.write(`${JSON.stringify({ error: 'Rai Buddy could not complete this reply. Please try again.' })}\n`);
     } finally {
       if (!response.writableEnded && !response.destroyed) response.end();
     }
